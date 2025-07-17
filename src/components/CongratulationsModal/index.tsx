@@ -17,7 +17,7 @@ export function CongratulationsModal({
     return (
         <Modal isOpen={isOpen} onClose={onClose}>
             <div className={styles.content}>
-                <div className={styles.icon}>
+                <div className={styles.checkIcon}>
                     <CheckCircle size={64} />
                 </div>
 
@@ -37,7 +37,7 @@ export function CongratulationsModal({
                     Continue assim! Cada tarefa concluída é um passo em direção aos seus objetivos.
                 </p>
 
-                <button className={styles.closeButton} onClick={onClose}>
+                <button className={styles.continueButton} onClick={onClose}>
                     Continuar
                 </button>
             </div>
