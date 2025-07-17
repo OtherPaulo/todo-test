@@ -1,9 +1,10 @@
 import { PlusCircle, ClipboardText } from "phosphor-react";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import styles from "./app.module.css";
 import { Header } from "./components/Header";
 import { Task } from "./components/Task";
+import { useLocalStorage } from "./hooks/useLocalStorage";
 
 interface TaskType {
   id: string;
@@ -11,57 +12,57 @@ interface TaskType {
   isCompleted: boolean;
 }
 
-const data = [
-  {
-    id: uuidv4(),
-    title: "Tarefa 1",
-    isCompleted: false,
-  },
-  {
-    id: uuidv4(),
-    title: "Tarefa 2",
-    isCompleted: false,
-  },
-];
-
 export function App() {
-  const [tasks, setTasks] = useState<TaskType[]>([]);
+  const [tasks, setTasks] = useLocalStorage<TaskType[]>("todo-tasks", []);
   const [newTask, setNewTask] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
-  useEffect(() => {
-    setTasks(data);
-  }, []);
-
-  const handleNewTaskChange = (event: any) => {
+  const handleNewTaskChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setNewTask(event.target.value);
+    if (errorMessage) {
+      setErrorMessage("");
+    }
   };
 
-  const handleCreateTask = (event: any) => {
+  const handleCreateTask = (event: React.FormEvent) => {
     event.preventDefault();
-    setTasks([
-      ...tasks,
-      {
-        id: uuidv4(),
-        title: newTask,
-        isCompleted: false,
-      },
-    ]);
+    const trimmedTask = newTask.trim();
+
+    if (trimmedTask === "") {
+      setErrorMessage("Por favor, digite uma tarefa antes de criar.");
+      setTimeout(() => {
+        setErrorMessage("");
+      }, 5000);
+      return;
+    }
+
+    const newTaskObj: TaskType = {
+      id: uuidv4(),
+      title: trimmedTask,
+      isCompleted: false,
+    };
+
+    setTasks(prevTasks => [...prevTasks, newTaskObj]);
     setNewTask("");
   };
 
   const completeTask = (id: string) => {
-    setTasks(
-      tasks.map((task) =>
+    setTasks(prevTasks =>
+      prevTasks.map((task) =>
         task.id === id ? { ...task, isCompleted: !task.isCompleted } : task
       )
     );
   };
 
   const deleteTask = (id: string) => {
-    setTasks(tasks.filter((task) => task.id !== id));
+    setTasks(prevTasks => prevTasks.filter((task) => task.id !== id));
   };
 
-  const totalCompleted = tasks.filter((task) => task.isCompleted).length;
+  const totalCompleted = useMemo(() => {
+    return tasks.filter((task) => task.isCompleted).length;
+  }, [tasks]);
+
+  const isButtonDisabled = newTask.trim() === "";
 
   return (
     <>
@@ -73,13 +74,23 @@ export function App() {
             placeholder="Adicione uma tarefa"
             value={newTask}
             onChange={handleNewTaskChange}
-            required
           />
-          <button type="submit">
+          <button
+            type="submit"
+            disabled={isButtonDisabled}
+            className={isButtonDisabled ? styles.buttonDisabled : ''}
+          >
             Criar
             <PlusCircle size={20} />
           </button>
         </form>
+
+        {errorMessage && (
+          <div className={styles.errorMessage}>
+            {errorMessage}
+          </div>
+        )}
+
         <div className={styles.content}>
           <div className={styles.contentHeader}>
             <div>
