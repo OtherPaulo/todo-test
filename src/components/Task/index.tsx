@@ -7,7 +7,7 @@ export function Task({ checked, title, id, onComplete, onDelete }: any) {
   };
 
   const handleDeleteTask = () => {
-    onDelete(id);
+    onDelete(id, title);
   };
 
   return (
