@@ -1,48 +1,48 @@
 import { PlusCircle, ClipboardText } from "phosphor-react";
-import { useCallback, useMemo, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import styles from "./app.module.css";
 import { Header } from "./components/Header";
 import { Task } from "./components/Task";
 
+interface TaskType {
+  id: string;
+  title: string;
+  isCompleted: boolean;
+}
+
 const data = [
   {
     id: uuidv4(),
     title: "Tarefa 1",
-    isDeleted: false,
     isCompleted: false,
   },
   {
     id: uuidv4(),
     title: "Tarefa 2",
-    isDeleted: false,
     isCompleted: false,
   },
 ];
 
 export function App() {
-  const [tasks, setTasks] = useState<any>();
+  const [tasks, setTasks] = useState<TaskType[]>([]);
   const [newTask, setNewTask] = useState("");
-  const [totalCompleted, setTotalCompleted] = useState(0)
 
   useEffect(() => {
-   setTasks(data) 
-  })
+    setTasks(data);
+  }, []);
 
   const handleNewTaskChange = (event: any) => {
-    event.preventDefault();
     setNewTask(event.target.value);
   };
 
   const handleCreateTask = (event: any) => {
     event.preventDefault();
-
     setTasks([
       ...tasks,
       {
         id: uuidv4(),
         title: newTask,
-        isDeleted: false,
         isCompleted: false,
       },
     ]);
@@ -50,24 +50,18 @@ export function App() {
   };
 
   const completeTask = (id: string) => {
-    const tasksWithoutCompleteOne = tasks.map((task) =>
-      task.id === id ? { ...task, isCompleted: true } : task
+    setTasks(
+      tasks.map((task) =>
+        task.id === id ? { ...task, isCompleted: !task.isCompleted } : task
+      )
     );
-
-    setTasks(tasksWithoutCompleteOne);
   };
 
   const deleteTask = (id: string) => {
-    const taskssWithoutDeleteOne = tasks.filter((task) => task.id !== id);
-
-    setTasks(taskssWithoutDeleteOne);
+    setTasks(tasks.filter((task) => task.id !== id));
   };
 
-  useEffect(() => {
-    tasks.map((task) => task.isCompleted === true && setTotalCompleted(totalCompleted + 1));
-  }, [totalCompleted])
-
-  
+  const totalCompleted = tasks.filter((task) => task.isCompleted).length;
 
   return (
     <>
@@ -89,13 +83,12 @@ export function App() {
         <div className={styles.content}>
           <div className={styles.contentHeader}>
             <div>
-              <strong>Tarefas criadas</strong>
-              <span>{tasks.length}</span>
+              <strong className={styles.createdLabel}>Tarefas criadas</strong>
+              <span className={styles.counter}>{tasks.length}</span>
             </div>
-
             <div>
-              <strong>Concluídas</strong>
-              <span>
+              <strong className={styles.completedLabel}>Concluídas</strong>
+              <span className={styles.counter}>
                 {totalCompleted} de {tasks.length}
               </span>
             </div>
@@ -104,6 +97,7 @@ export function App() {
             {tasks.length > 0 ? (
               tasks.map((task) => (
                 <Task
+                  key={task.id}
                   id={task.id}
                   checked={task.isCompleted}
                   title={task.title}
