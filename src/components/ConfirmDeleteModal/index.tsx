@@ -32,7 +32,7 @@ export function ConfirmDeleteModal({
             </h2>
 
             <p className={styles.message}>
-                Você tem certeza que deseja excluir a tarefa"?
+                Você tem certeza que deseja excluir a tarefa?
             </p>
 
             <div className={styles.taskPreview}>

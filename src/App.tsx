@@ -5,6 +5,8 @@ import styles from "./app.module.css";
 import { Header } from "./components/Header";
 import { Task } from "./components/Task";
 import { useLocalStorage } from "./hooks/useLocalStorage";
+import { ConfirmDeleteModal } from "./components/ConfirmDeleteModal";
+import { CongratulationsModal } from "./components/CongratulationsModal";
 
 interface TaskType {
   id: string;
@@ -16,6 +18,23 @@ export function App() {
   const [tasks, setTasks] = useLocalStorage<TaskType[]>("todo-tasks", []);
   const [newTask, setNewTask] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+    taskId: string;
+    taskTitle: string;
+  }>({
+    isOpen: false,
+    taskId: "",
+    taskTitle: "",
+  });
+  
+  const [congratsModal, setCongratsModal] = useState<{
+    isOpen: boolean;
+    taskTitle: string;
+  }>({
+    isOpen: false,
+    taskTitle: "",
+  });
 
   const handleNewTaskChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setNewTask(event.target.value);
@@ -47,6 +66,15 @@ export function App() {
   };
 
   const completeTask = (id: string) => {
+    const task = tasks.find(t => t.id === id);
+    
+    if (task && !task.isCompleted) {
+      setCongratsModal({
+        isOpen: true,
+        taskTitle: task.title,
+      });
+    }
+    
     setTasks(prevTasks =>
       prevTasks.map((task) =>
         task.id === id ? { ...task, isCompleted: !task.isCompleted } : task
@@ -54,8 +82,31 @@ export function App() {
     );
   };
 
-  const deleteTask = (id: string) => {
-    setTasks(prevTasks => prevTasks.filter((task) => task.id !== id));
+  const handleDeleteClick = (id: string, title: string) => {
+    setDeleteModal({
+      isOpen: true,
+      taskId: id,
+      taskTitle: title,
+    });
+  };
+
+  const confirmDelete = () => {
+    setTasks(prevTasks => prevTasks.filter((task) => task.id !== deleteModal.taskId));
+  };
+
+  const closeDeleteModal = () => {
+    setDeleteModal({
+      isOpen: false,
+      taskId: "",
+      taskTitle: "",
+    });
+  };
+
+  const closeCongratsModal = () => {
+    setCongratsModal({
+      isOpen: false,
+      taskTitle: "",
+    });
   };
 
   const totalCompleted = useMemo(() => {
@@ -75,8 +126,8 @@ export function App() {
             value={newTask}
             onChange={handleNewTaskChange}
           />
-          <button
-            type="submit"
+          <button 
+            type="submit" 
             disabled={isButtonDisabled}
             className={isButtonDisabled ? styles.buttonDisabled : ''}
           >
@@ -94,12 +145,12 @@ export function App() {
         <div className={styles.content}>
           <div className={styles.contentHeader}>
             <div>
-              <strong className={styles.createdLabel}>Tarefas criadas</strong>
-              <span className={styles.counter}>{tasks.length}</span>
+              <strong>Tarefas criadas</strong>
+              <span>{tasks.length}</span>
             </div>
             <div>
-              <strong className={styles.completedLabel}>Concluídas</strong>
-              <span className={styles.counter}>
+              <strong>Concluídas</strong>
+              <span>
                 {totalCompleted} de {tasks.length}
               </span>
             </div>
@@ -113,7 +164,7 @@ export function App() {
                   checked={task.isCompleted}
                   title={task.title}
                   onComplete={completeTask}
-                  onDelete={deleteTask}
+                  onDelete={handleDeleteClick}
                 />
               ))
             ) : (
@@ -125,6 +176,19 @@ export function App() {
             )}
           </div>
         </div>
+
+        <ConfirmDeleteModal
+          isOpen={deleteModal.isOpen}
+          onClose={closeDeleteModal}
+          onConfirm={confirmDelete}
+          taskTitle={deleteModal.taskTitle}
+        />
+
+        <CongratulationsModal
+          isOpen={congratsModal.isOpen}
+          onClose={closeCongratsModal}
+          taskTitle={congratsModal.taskTitle}
+        />
       </main>
     </>
   );
